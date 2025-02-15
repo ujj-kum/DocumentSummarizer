@@ -90,7 +90,9 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.llms import HuggingFacePipeline
 from transformers import pipeline
 from huggingface_hub import login, whoami
-
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 hf_token = os.getenv("HF_TOKEN")  # Ensure the token is loaded
 
