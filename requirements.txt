@@ -5,8 +5,7 @@ pypdf==3.17.1
 sentence-transformers==2.2.2
 chromadb==0.4.24
 accelerate==0.26.0
-sqlite3
-pysqlite3-binary==0.5.2
+pysqlite3-binary==0.5.2  # Optional: Remove if it still causes issues
 torch==2.1.2
 transformers==4.38.2
 huggingface_hub==0.21.3
