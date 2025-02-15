@@ -5,4 +5,5 @@ sentence-transformers
 chromadb
 streamlit
 accelerate==0.26.0
-pysqlite3
+sqlite3
+pysqlite3-binary
