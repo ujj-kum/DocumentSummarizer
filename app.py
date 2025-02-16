@@ -2,107 +2,63 @@ import warnings
 warnings.filterwarnings('ignore')
 import os
 import streamlit as st
-from langchain_community.vectorstores import Chroma
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.embeddings.huggingface import HuggingFaceEmbeddings
-from langchain.chains import RetrievalQA
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.llms import HuggingFacePipeline
-from transformers import pipeline
-from huggingface_hub import login
-import sys
-import torch
-__import__('pysqlite3')
+from huggingface_hub import InferenceClient
 
+# Hugging Face authentication
+hf_token = os.getenv("HF_TOKEN")
+if not hf_token:
+    st.error("Hugging Face token not found! Set HF_TOKEN in environment variables.")
+    st.stop()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# Initialize Hugging Face Inference Client
+client = InferenceClient(model="mistralai/Mistral-7B-Instruct-v0.2", token=hf_token)
 
-hf_token = os.getenv("HF_TOKEN")  # Ensure the token is loaded
-
-if hf_token:
-    login(token=hf_token)  # Authenticate with Hugging Face
-    print("#"*100)
-    print("LOGIN SUCCESSFUL!!!")
-    print("#"*100)
-else:
-    print("#"*100)
-    print('NOT FOUND!!!!!!!')
-    print("#"*100)
-    
-## Load Hugging Face LLM
-@st.cache_resource()
-def get_llm():
-    hf_pipeline = pipeline(
-        "text-generation",
-        model="mistralai/Mistral-7B-Instruct-v0.2",
-        token=hf_token,  # Make sure this is set in the environment
-        device_map=device
-    )
-    return HuggingFacePipeline(pipeline=hf_pipeline)
-
-
-## Load Hugging Face Embeddings
-@st.cache_resource()
-def huggingface_embedding():
-    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-
-
-## Load PDF and Process
 def process_pdf(uploaded_file):
-    if uploaded_file is not None:
-        with st.spinner("Processing document..."):
-            # Save the uploaded file to a temporary location
-            temp_path = "temp_uploaded.pdf"
-            with open(temp_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
+    try:
+        if uploaded_file is None:
+            return "No file uploaded."
 
-            # Load the PDF
-            loader = PyPDFLoader(temp_path)
-            documents = loader.load()
+        # Save the uploaded file temporarily
+        temp_path = f"./temp_{uploaded_file.name}"
+        with open(temp_path, "wb") as f:
+            f.write(uploaded_file.read())
 
-            text_splitter = RecursiveCharacterTextSplitter(
-                chunk_size=1000,
-                chunk_overlap=50,
-                length_function=len,
+        # Load PDF
+        loader = PyPDFLoader(temp_path)
+        documents = loader.load()
+
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=100)
+        chunks = text_splitter.split_documents(documents)
+
+        summaries = []  # ✅ Collect summaries here
+        for chunk in chunks[:5]:  # Process first 5 chunks only
+            text = " ".join(chunk.page_content.split()[:500])  # First 500 words
+            response = client.text_generation(
+                prompt=f"Summarize this text:\n\n{text}\n\nSummary:",
+                max_new_tokens=150,  # Shorter summary length
+                stream=False  # Ensure synchronous response
             )
-            chunks = text_splitter.split_documents(documents)
+            summaries.append(response.strip())
 
-            embedding_model = huggingface_embedding()
-            vectordb = Chroma.from_documents(chunks, embedding_model)
-            return vectordb
-    return None
+        return "\n\n".join(summaries)  # ✅ Properly return the summarized output
 
-
-## QA Retrieval Function
-def retriever_qa(vectordb, query):
-    llm = get_llm()
-    retriever_obj = vectordb.as_retriever()
-    
-    qa = RetrievalQA.from_chain_type(llm=llm, 
-                                     chain_type="stuff", 
-                                     retriever=retriever_obj, 
-                                     return_source_documents=False)
-
-    response = qa.invoke(query)
-    return response['result']
-
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 # Streamlit UI
-st.set_page_config(page_title="RAG Chatbot (Hugging Face)", layout="wide")
-st.title("📄 RAG Chatbot (Hugging Face)")
-st.write("Upload a PDF document and ask any question. The chatbot will use the document to answer.")
+st.title("📄 Document Summarization Chatbot 🚀")
+st.write("Upload a PDF document and get a summarized version using Hugging Face API.")
 
-# File Upload
-uploaded_file = st.file_uploader("Upload a PDF", type=['pdf'])
+# File uploader
+uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
 
-if uploaded_file is not None:
-    vectordb = process_pdf(uploaded_file)
-
-    if vectordb:
-        query = st.text_input("Ask a question based on the document:")
-        
-        if query:
-            with st.spinner("Retrieving answer..."):
-                answer = retriever_qa(vectordb, query)
-                st.success(answer)
+# Button to process the PDF
+if st.button("Summarize"):
+    if uploaded_file:
+        with st.spinner("Summarizing..."):
+            summary = process_pdf(uploaded_file)
+        st.text_area("Summary", summary, height=300)
+    else:
+        st.warning("Please upload a PDF file first.")
