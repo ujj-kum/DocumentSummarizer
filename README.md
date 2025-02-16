@@ -1,13 +1,19 @@
-# DocumentSummarizer
-Repository for creating a document summarizer as participating entry for hackathon at NIT Silchar
+# Document Summarization Chatbot  
 
+A Streamlit-based web app that summarizes PDFs using Mistral-7B-Instruct-v0.2 via Hugging Face API.  
 
-Execute the notebooks in order:
+## Features  
+- PDF Upload & Parsing (LangChain & PyPDFLoader)  
+- Text Splitting (RecursiveCharacterTextSplitter)  
+- AI-Powered Summarization (Mistral-7B-Instruct-v0.2)  
+- Interactive UI (Streamlit)  
 
-load_document.py
-text_split.py
-embedding.py
-vector_db.py
-retriever.py
-final_llm.py
-run python final_llm.py
+## Tech Stack  
+- Model: [Mistral-7B-Instruct-v0.2](https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.2)  
+- Frameworks: Streamlit, LangChain, Hugging Face API  
+
+## Setup  
+
+### Install Dependencies  
+```sh
+pip install -r requirements.txt
