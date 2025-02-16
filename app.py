@@ -49,7 +49,7 @@ def process_pdf(uploaded_file):
 
 # Streamlit UI
 st.title("Document Summarization Chatbot ")
-st.write("Upload a PDF document and get a summarized version using Hugging Face API.")
+st.write("Upload a PDF document and get a summarized version.")
 
 # File uploader
 uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
