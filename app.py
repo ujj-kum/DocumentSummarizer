@@ -15,7 +15,7 @@ import torch
 __import__('pysqlite3')
 
 
-device = 0 if torch.cuda.is_available() else -1
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 
 hf_token = os.getenv("HF_TOKEN")  # Ensure the token is loaded
