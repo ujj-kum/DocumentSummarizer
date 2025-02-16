@@ -35,7 +35,7 @@ else:
 def get_llm():
     hf_pipeline = pipeline(
         "text-generation",
-        model="mistralai/Mixtral-8x7B-Instruct-v0.1",
+        model="mistralai/Mistral-7B-Instruct-v0.2",
         token=hf_token,  # Make sure this is set in the environment
         device_map=device
     )
