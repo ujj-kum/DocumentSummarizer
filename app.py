@@ -32,7 +32,7 @@ def process_pdf(uploaded_file):
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1500, chunk_overlap=100)
         chunks = text_splitter.split_documents(documents)
 
-        summaries = []  # ✅ Collect summaries here
+        summaries = []  # 
         for chunk in chunks[:5]:  # Process first 5 chunks only
             text = " ".join(chunk.page_content.split()[:500])  # First 500 words
             response = client.text_generation(
@@ -48,7 +48,7 @@ def process_pdf(uploaded_file):
         return f"Error: {str(e)}"
 
 # Streamlit UI
-st.title("📄 Document Summarization Chatbot 🚀")
+st.title("Document Summarization Chatbot ")
 st.write("Upload a PDF document and get a summarized version using Hugging Face API.")
 
 # File uploader
